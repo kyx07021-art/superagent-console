@@ -150,6 +150,20 @@ window.SUPERAGENT={
         "note": "汇报能回消息接收器。"
       }
     },
+    "bus": {
+      "sources": [
+        "timer",
+        "wechat",
+        "wecom",
+        "mail",
+        "campus",
+        "x",
+        "console-events",
+        "reentry",
+        "worker-report"
+      ],
+      "target": "rectifier"
+    },
     "edges": [
       [
         "relay",
@@ -175,42 +189,6 @@ window.SUPERAGENT={
         "relay",
         "cli-session",
         "both bottom>top"
-      ],
-      [
-        "wechat",
-        "rectifier"
-      ],
-      [
-        "wecom",
-        "rectifier"
-      ],
-      [
-        "mail",
-        "rectifier"
-      ],
-      [
-        "campus",
-        "rectifier"
-      ],
-      [
-        "x",
-        "rectifier"
-      ],
-      [
-        "console-events",
-        "rectifier"
-      ],
-      [
-        "rectifier",
-        "timer"
-      ],
-      [
-        "rectifier",
-        "reentry"
-      ],
-      [
-        "rectifier",
-        "worker-report"
       ],
       [
         "rectifier",
@@ -265,12 +243,12 @@ window.SUPERAGENT={
       [
         "knowledge-api",
         "papers",
-        "bottom>left"
+        "right>left"
       ]
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T05:04:37.023Z",
+    "updatedAt": "2026-11-08T05:09:16.682Z",
     "router": {
       "provider": "deepseek",
       "online": true

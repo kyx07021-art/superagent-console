@@ -84,7 +84,7 @@
   .entry-row { display: flex; gap: 14px; }
   .entry-row .node { flex: 1 1 0; }
 
-  .recv { display: flex; gap: 34px; align-items: center; }
+  .recv { display: flex; gap: clamp(44px, 6vw, 88px); align-items: center; }
   .recv-list { flex: 1 1 auto; display: grid; gap: 7px; }
   .recv-stage { flex: 0 1 clamp(110px, 13vw, 148px); }
 
@@ -306,23 +306,50 @@ function draw(animate = false) {
     const target = pos.get(list[0].toId)
     const onVertical = list[0].entry === 'left' || list[0].entry === 'right'
     const span = onVertical ? target.h : target.w
-    const step = Math.min(12, (span * 0.5) / list.length)
+    const step = Math.min(11, (span * 0.62) / list.length)
     list.forEach((route, k) => {
       const offset = (k - (list.length - 1) / 2) * step
-      const n = route.points.length
-      const tip = route.points[n - 1]
+      // 每条单独的竖向/横向拐道错开，否则几条线会叠成一根
+      const lane = (k - (list.length - 1) / 2) * 8
+      const pts = route.points
+      if (pts.length === 4) {
+        if (Math.abs(pts[1].x - pts[2].x) < 0.5) {
+          pts[1] = { x: pts[1].x + lane, y: pts[1].y }
+          pts[2] = { x: pts[2].x + lane, y: pts[2].y }
+        } else {
+          pts[1] = { x: pts[1].x, y: pts[1].y + lane }
+          pts[2] = { x: pts[2].x, y: pts[2].y + lane }
+        }
+      }
+      const n = pts.length
+      const tip = pts[n - 1]
       if (onVertical) {
-        route.points[n - 1] = { x: tip.x, y: tip.y + offset }
-        if (n > 3) route.points[n - 2] = { x: route.points[n - 2].x, y: tip.y + offset }
+        pts[n - 1] = { x: tip.x, y: tip.y + offset }
+        if (n > 3) pts[n - 2] = { x: pts[n - 2].x, y: tip.y + offset }
       } else {
-        route.points[n - 1] = { x: tip.x + offset, y: tip.y }
-        if (n > 3) route.points[n - 2] = { x: tip.x + offset, y: route.points[n - 2].y }
+        pts[n - 1] = { x: tip.x + offset, y: tip.y }
+        if (n > 3) pts[n - 2] = { x: tip.x + offset, y: pts[n - 2].y }
       }
     })
   }
 
   const parts = routes.map(route =>
     `<path class="${route.cls}" d="${elbow(route.points)}"${route.both ? ' marker-start="url(#arrowBack)"' : ''} marker-end="url(#arrow)" data-i="${route.i}"/>`)
+
+  // 六路来源收成一条总线：每行一根短横线，合并成一条竖干，再用一个箭头插进整流器
+  if (map.bus) {
+    const target = pos.get(map.bus.target)
+    const sources = (map.bus.sources || []).map(id => pos.get(id)).filter(Boolean)
+    if (target && sources.length) {
+      const trunkX = Math.round(target.x - target.w / 2 - 28)
+      const ys = sources.map(s => s.y)
+      for (const s of sources) {
+        parts.push(`<path d="M${Math.round(s.x + s.w / 2)},${Math.round(s.y)} L${trunkX},${Math.round(s.y)}"/>`)
+      }
+      parts.push(`<path d="M${trunkX},${Math.round(Math.min(...ys))} L${trunkX},${Math.round(Math.max(...ys))}"/>`)
+      parts.push(`<path d="M${trunkX},${Math.round(target.y)} L${Math.round(target.x - target.w / 2)},${Math.round(target.y)}" marker-end="url(#arrow)"/>`)
+    }
+  }
 
   svg.innerHTML = `<defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
