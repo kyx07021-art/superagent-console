@@ -313,6 +313,10 @@ window.SUPERAGENT={
         "rectifier"
       ],
       [
+        "reentry",
+        "rectifier"
+      ],
+      [
         "worker-report",
         "rectifier"
       ],
@@ -322,11 +326,11 @@ window.SUPERAGENT={
       ],
       [
         "relay",
-        "console"
+        "cli-session"
       ],
       [
-        "relay",
-        "cli-session"
+        "cli-session",
+        "router-manager"
       ],
       [
         "interaction",
@@ -337,8 +341,8 @@ window.SUPERAGENT={
         "relay"
       ],
       [
-        "cli-session",
-        "router-manager"
+        "relay",
+        "console"
       ],
       [
         "router-manager",
@@ -353,16 +357,20 @@ window.SUPERAGENT={
         "supervisor"
       ],
       [
-        "worker-manager",
-        "worker-session"
-      ],
-      [
         "supervisor",
-        "outbox"
+        "worker-session"
       ],
       [
         "worker-session",
         "outbox"
+      ],
+      [
+        "outbox",
+        "worker-report"
+      ],
+      [
+        "worker-manager",
+        "stats"
       ],
       [
         "worker-manager",
@@ -379,7 +387,7 @@ window.SUPERAGENT={
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T04:37:23.327Z",
+    "updatedAt": "2026-11-08T04:39:52.764Z",
     "providers": [
       {
         "id": "codex",
