@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperAgent · 工作台</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <div class="brand">SuperAgent</div>
+  <nav><a class="on" href="./">工作台</a><a href="progress.html">进度</a></nav>
+</header>
+
+<main>
+  <section class="hero" id="hero">
+    <div class="pulse"></div>
+    <div>
+      <h1 id="heroTitle">在线</h1>
+      <p id="heroText">助手正在待命。</p>
+    </div>
+    <div class="when" id="heroWhen"></div>
+  </section>
+
+  <section>
+    <h2>在办的事</h2>
+    <div id="workers"></div>
+  </section>
+
+  <section style="margin-top:34px">
+    <h2>最近</h2>
+    <div class="feed" id="feed"></div>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script>
+const data = window.SUPERAGENT || { snapshot: {} }
+const s = data.snapshot || {}
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+const clock = iso => new Date(iso).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+const day = iso => new Date(iso).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
+
+const online = !!(s.router && s.router.online)
+document.getElementById('hero').classList.toggle('off', !online)
+document.getElementById('heroTitle').textContent = online ? '在线' : '离线'
+document.getElementById('heroText').textContent = online
+  ? (s.router.provider === 'deepseek' ? '现在用 DeepSeek 处理事情。' : '助手正在待命。')
+  : '本机没有在运行。'
+document.getElementById('heroWhen').textContent = s.updatedAt ? day(s.updatedAt) + ' ' + clock(s.updatedAt) : ''
+
+const workers = s.workers || []
+document.getElementById('workers').innerHTML = workers.length ? workers.map(w => `
+  <article class="card">
+    <div class="top">
+      <span class="dot ${w.status === 'running' ? 'green' : w.status === 'failed' ? 'red' : 'yellow'}"></span>
+      <span class="goal">${esc(w.goal)}</span>
+      <span class="meta">${w.status === 'running' ? '进行中' : w.status === 'failed' ? '出错' : w.status === 'stopped' ? '已完成' : '等待中'}</span>
+    </div>
+    ${(w.steps || []).length ? `<ol>${w.steps.map(st => `<li class="${st.done ? 'done' : ''}">${esc(st.title)}${st.summary ? ' — ' + esc(st.summary) : ''}</li>`).join('')}</ol>` : ''}
+  </article>`).join('') : '<div class="empty">还没有交办的事。</div>'
+
+const feed = (s.recent || []).slice().reverse()
+document.getElementById('feed').innerHTML = feed.length ? feed.map(e => `
+  <div class="ev"><time>${clock(e.at)}</time><span>${e.kind === 'reply' ? '<b>助手回了你</b> · ' : ''}${esc(e.text)}</span></div>`).join('')
+  : '<div class="empty">还没有动静。</div>'
+</script>
+</body>
+</html>
