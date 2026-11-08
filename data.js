@@ -27,7 +27,7 @@ window.SUPERAGENT={
       "console": {
         "name": "SuperAgent 工作台网页",
         "status": "yellow",
-        "note": "页面能打开，按钮正在试。"
+        "note": "能切并保存默认环境，多个页面自动同步。"
       },
       "wechat-bridge": {
         "name": "微信桥接",
@@ -36,18 +36,18 @@ window.SUPERAGENT={
       },
       "relay": {
         "name": "SuperAgent 状态转发中心",
-        "status": "yellow",
+        "status": "green",
         "note": "收发都经它记录，Router 的记忆从这取。"
       },
       "memory": {
         "name": "SuperAgent 记忆管理器",
-        "status": "red",
-        "note": "接口谈好了，还没写。"
+        "status": "yellow",
+        "note": "近期 20 条 + 字面召回进 Router；语义召回没接。"
       },
       "interaction": {
         "name": "互动记录管理器",
-        "status": "red",
-        "note": "接口谈好了，还没写。"
+        "status": "green",
+        "note": "用户消息与答复原文落库，重投只留一条。"
       },
       "timer": {
         "name": "定时任务器",
@@ -172,6 +172,11 @@ window.SUPERAGENT={
         "rectifier"
       ],
       [
+        "relay",
+        "cli-session",
+        "both bottom>top"
+      ],
+      [
         "wechat",
         "rectifier"
       ],
@@ -225,11 +230,13 @@ window.SUPERAGENT={
       ],
       [
         "worker-manager",
-        "supervisor"
+        "supervisor",
+        "right>left"
       ],
       [
         "worker-manager",
-        "worker-session"
+        "worker-session",
+        "right>left"
       ],
       [
         "supervisor",
@@ -237,7 +244,8 @@ window.SUPERAGENT={
       ],
       [
         "worker-session",
-        "outbox"
+        "outbox",
+        "bottom>right"
       ],
       [
         "outbox",
@@ -247,20 +255,22 @@ window.SUPERAGENT={
       [
         "worker-manager",
         "knowledge-api",
-        "both"
+        "both top>bottom"
       ],
       [
         "knowledge-api",
-        "obsidian"
+        "obsidian",
+        "right>left"
       ],
       [
         "knowledge-api",
-        "papers"
+        "papers",
+        "bottom>left"
       ]
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T05:00:00.701Z",
+    "updatedAt": "2026-11-08T05:04:37.023Z",
     "router": {
       "provider": "deepseek",
       "online": true

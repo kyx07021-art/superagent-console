@@ -240,6 +240,17 @@ function elbow(points, radius = 8) {
   return d + ` L${last.x},${last.y}`
 }
 
+// "出边>入边"，可带 both / loop
+function parseSpec(spec) {
+  if (!spec) return { kind: '', sides: null, both: false }
+  let text = String(spec).trim()
+  let both = false
+  if (/\bboth\b/.test(text)) { both = true; text = text.replace(/\bboth\b/, '').trim() }
+  const m = text.match(/^(left|right|top|bottom)\s*>\s*(left|right|top|bottom)$/)
+  if (m) return { kind: '', sides: [m[1], m[2]], both }
+  return { kind: text, sides: null, both }
+}
+
 function draw(animate = false) {
   if (!map) return
   const box = $('#map').getBoundingClientRect()
@@ -252,10 +263,11 @@ function draw(animate = false) {
   for (const el of document.querySelectorAll('[data-id]')) pos.set(el.dataset.id, boxOf(el, box))
 
   const routes = []
-  map.edges.forEach(([fromId, toId, kind], i) => {
+  map.edges.forEach(([fromId, toId, spec], i) => {
     const a = pos.get(fromId), b = pos.get(toId)
     if (!a || !b) return
-    if (kind === 'loop') {
+    const parsed = parseSpec(spec)
+    if (parsed.kind === 'loop') {
       const floor = box.height - 10
       const start = sidePoint(a, 'bottom')
       const end = sidePoint(b, 'left')
@@ -263,18 +275,24 @@ function draw(animate = false) {
         points: [start, { x: start.x, y: floor }, { x: 16, y: floor }, { x: 16, y: end.y }, end] })
       return
     }
-    const [fromSide, toSide] = pickSides(a, b)
+    const [fromSide, toSide] = parsed.sides || pickSides(a, b)
     const p1 = sidePoint(a, fromSide)
     const p2 = sidePoint(b, toSide)
+    const fromH = fromSide === 'left' || fromSide === 'right'
+    const toH = toSide === 'left' || toSide === 'right'
     let points
-    if (fromSide === 'left' || fromSide === 'right') {
+    if (fromH && toH) {
       const midX = (p1.x + p2.x) / 2
       points = [p1, { x: midX, y: p1.y }, { x: midX, y: p2.y }, p2]
-    } else {
+    } else if (!fromH && !toH) {
       const midY = (p1.y + p2.y) / 2
       points = [p1, { x: p1.x, y: midY }, { x: p2.x, y: midY }, p2]
+    } else if (fromH) {
+      points = [p1, { x: p2.x, y: p1.y }, p2]
+    } else {
+      points = [p1, { x: p1.x, y: p2.y }, p2]
     }
-    routes.push({ i, cls: '', both: kind === 'both', entry: toSide, toId, points })
+    routes.push({ i, cls: '', both: parsed.both, entry: toSide, toId, points })
   })
 
   const groups = new Map()
@@ -292,13 +310,13 @@ function draw(animate = false) {
     list.forEach((route, k) => {
       const offset = (k - (list.length - 1) / 2) * step
       const n = route.points.length
-      const tip = route.points[n - 1], prev = route.points[n - 2]
+      const tip = route.points[n - 1]
       if (onVertical) {
         route.points[n - 1] = { x: tip.x, y: tip.y + offset }
-        route.points[n - 2] = { x: prev.x, y: tip.y + offset }
+        if (n > 3) route.points[n - 2] = { x: route.points[n - 2].x, y: tip.y + offset }
       } else {
         route.points[n - 1] = { x: tip.x + offset, y: tip.y }
-        route.points[n - 2] = { x: tip.x + offset, y: prev.y }
+        if (n > 3) route.points[n - 2] = { x: tip.x + offset, y: route.points[n - 2].y }
       }
     })
   }
