@@ -2,43 +2,73 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SuperAgent · 进度</title>
 <link rel="stylesheet" href="app.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperAgent 系统实现状态图</title>
 <style>
-  main { max-width: 1290px; }
-  .head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
-  .head h1 { margin: 0; font-size: 17px; font-weight: 650; }
-  .head p { margin: 0; color: var(--muted); font-size: 13px; }
-  .head .counts { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  :root {
+    --bg: #0a0c10; --line: #212734; --text: #e8ebf1; --muted: #8b94a5; --dim: #5c6577;
+    --gray: #5b6474; --red: #f87171; --yellow: #f5b13d; --green: #34d399;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 14px/1.55 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; }
+
+  header.top { display: flex; align-items: flex-end; gap: 26px; flex-wrap: wrap;
+    padding: 24px 34px 15px; border-bottom: 1px solid var(--line); }
+  header.top h1 { margin: 0; font-size: 19px; letter-spacing: .4px; font-weight: 650; }
+  header.top .lede { margin: 5px 0 0; color: var(--muted); font-size: 12.5px; }
+  .counts { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
   .chip { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 999px;
-    border: 1px solid var(--line); background: var(--panel); font-size: 12px; }
+    border: 1px solid var(--line); background: #12161e; font-size: 12px; }
   .chip b { font-variant-numeric: tabular-nums; font-weight: 650; }
   .swatch { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 34px;
+    border-bottom: 1px solid var(--line); background: #0c0f14; }
+  .legend div { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
 
-  .map { position: relative; display: grid;
-    grid-template-columns: 344px 236px 248px 404px;
-    grid-template-areas: "entry entry entry entry" "recv maint router worker";
-    gap: 26px 24px; align-items: start; padding-bottom: 10px; min-width: 1270px; }
-  #links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: visible; }
-  #links path { fill: none; stroke: #5a6782; stroke-width: 1.25; stroke-linecap: round; }
+  main { padding: 26px 34px 26px; overflow-x: auto; }
+  /* 交互入口在顶；状态维护在中间上方；接收器在左、Router 在中、Worker 在右。 */
+  .map {
+    position: relative;
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(330px, 380px) minmax(0, 1fr) minmax(0, 1.06fr);
+    grid-template-areas:
+      "entry entry entry"
+      "recv  maint maint"
+      "recv  router worker";
+    gap: 28px 24px;
+    align-items: start;
+  }
+  /* 线画在卡片之上，保证看得见；卡片仍是不透明的，线只在空白处穿行。 */
+  #links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; overflow: visible; }
+  #links path { fill: none; stroke: rgba(150,170,200,.5); stroke-width: 1.15; stroke-linecap: round; }
 
-  .zone { position: relative; z-index: 1; }
+  .zone { position: relative; z-index: 1; min-width: 0; }
   .zone[data-zone="entry"] { grid-area: entry; }
   .zone[data-zone="receivers"] { grid-area: recv; }
   .zone[data-zone="maintenance"] { grid-area: maint; }
   .zone[data-zone="router"] { grid-area: router; }
   .zone[data-zone="worker"] { grid-area: worker; }
-  .zone > h2 { margin: 0 0 14px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
+  .zone > h2 { margin: 0 0 13px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
     font-size: 12px; letter-spacing: 1.6px; font-weight: 600; color: var(--muted);
     display: flex; align-items: baseline; gap: 9px; }
   .zone > h2 em { font-style: normal; font-size: 11.5px; letter-spacing: 0; color: var(--dim); font-weight: 400; }
-  .group + .group { margin-top: 14px; }
+
+  .group + .group { margin-top: 12px; }
   .gtitle { font-size: 11px; letter-spacing: .6px; color: var(--dim); margin: 0 0 6px; }
-  .cards, .rows { display: grid; gap: 7px; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .zone[data-zone="entry"] .cards { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-  .zone[data-zone="entry"] .node { flex: 0 0 330px; }
+  .cards, .rows { display: grid; gap: 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cards.row { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+  .cards.row .node { flex: 0 0 340px; }
+
+  .split { display: flex; gap: 18px; align-items: flex-start; }
+  .split .main { flex: 1 1 auto; min-width: 0; }
+  .split .side { flex: 0 0 auto; }
+  .zone[data-zone="receivers"] .split .side { flex-basis: 150px; }
+  .zone[data-zone="maintenance"] .split .main { flex: 0 0 270px; }
+  .zone[data-zone="maintenance"] .split .side { flex: 1 1 auto; }
 
   .node[data-status="green"],  .row[data-status="green"]  { --fill:#0e2318; --edge:#1d4630; --dot:#34d399; --name:#d9f7e5; --note:#7fae95; }
   .node[data-status="yellow"], .row[data-status="yellow"] { --fill:#2a2211; --edge:#4f3e1d; --dot:#f5b13d; --name:#f7e6c2; --note:#a89572; }
@@ -47,45 +77,42 @@
 
   .node { background: var(--fill); border: 1px solid var(--edge); border-radius: 10px; padding: 11px 13px;
     transition: transform .16s ease, border-color .16s ease;
-    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 15ms); }
+    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 14ms); }
   .node:hover { transform: translateY(-1px); border-color: var(--dot); }
-  .node .name { font-size: 13.5px; font-weight: 600; color: var(--name); }
-  .node .note { font-size: 12px; color: var(--note); margin-top: 3px; }
+  .node .name { font-size: 13.5px; font-weight: 600; color: var(--name); overflow-wrap: anywhere; }
+  .node .note { font-size: 12px; color: var(--note); margin-top: 3px; overflow-wrap: anywhere; }
 
   .row { display: flex; align-items: center; gap: 8px; background: var(--fill); border: 1px solid var(--edge);
     border-radius: 8px; padding: 6px 10px;
-    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 15ms); }
-  .dot2 { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); flex: 0 0 auto; }
+    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 14ms); }
+  .row .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); flex: 0 0 auto; }
   .row .nm { flex: 1; font-size: 12.6px; color: var(--name); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row .nt { font-size: 11px; color: var(--note); white-space: nowrap; }
   @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  footer { padding: 0 34px 28px; color: var(--dim); font-size: 11.5px; display: flex; gap: 18px; flex-wrap: wrap; }
+  footer code { font-family: ui-monospace, Consolas, monospace; color: var(--muted); }
+  a { color: #6ea8fe; text-decoration: none; }
   @media (max-width: 1300px) {
     .map { min-width: 0; grid-template-columns: 1fr;
       grid-template-areas: "entry" "maint" "recv" "router" "worker"; }
+    .zone[data-zone="maintenance"] .split .main { flex: 1 1 auto; }
+    .split { flex-wrap: wrap; }
   }
 </style>
 </head>
 <body>
-<header>
-  <div class="brand">SuperAgent</div>
-  <nav><a href="./">工作台</a><a class="on" href="progress.html">进度</a></nav>
-</header>
+<header><div class="brand">SuperAgent</div><nav><a href="./">工作台</a><a class="on" href="progress.html">进度</a></nav><div class="counts" id="counts"></div></header>
 
-<main>
-  <div class="head">
-    <h1>现在做到哪了</h1>
-    <p>每块只写一句：能不能用。</p>
-    <div class="counts" id="counts"></div>
-  </div>
-  <div class="map" id="map"><svg id="links"></svg></div>
-</main>
+<div class="legend" id="legend"></div>
+<main><div class="map" id="map"><svg id="links"></svg></div></main>
 
 <script src="data.js"></script>
 <script>
-const data = window.SUPERAGENT || {}
-const map = data.map || { zones: [], edges: [] }
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 const ORDER = ['green', 'yellow', 'red', 'gray']
+const $ = s => document.querySelector(s)
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+
+let map = null
 let index = 0
 
 function nodeCard(node) {
@@ -94,7 +121,7 @@ function nodeCard(node) {
 }
 function nodeRow(node) {
   return `<div class="row" data-id="${esc(node.id)}" data-status="${node.status}" style="--i:${index++}">
-    <span class="dot2"></span><span class="nm">${esc(node.name)}</span><span class="nt">${esc(node.note)}</span></div>`
+    <span class="dot"></span><span class="nm">${esc(node.name)}</span><span class="nt">${esc(node.note)}</span></div>`
 }
 function groupHtml(group) {
   const head = group.title ? `<div class="gtitle">${esc(group.title)}</div>` : ''
@@ -104,23 +131,46 @@ function groupHtml(group) {
   else body = `<div class="cards">${(group.nodes || group.cards || []).map(nodeCard).join('')}</div>`
   return `<div class="group">${head}${body}</div>`
 }
+function zoneBody(zone) {
+  if (zone.layout === 'row') return `<div class="cards row">${zone.groups[0].nodes.map(nodeCard).join('')}</div>`
+  if (zone.layout === 'split') {
+    return `<div class="split"><div class="main">${zone.groups.map(groupHtml).join('')}</div>
+      <div class="side">${(zone.side || []).map(groupHtml).join('')}</div></div>`
+  }
+  return zone.groups.map(groupHtml).join('')
+}
 
-const counts = { gray: 0, red: 0, yellow: 0, green: 0 }
-for (const zone of map.zones) for (const group of zone.groups)
-  for (const node of [...(group.nodes || []), ...(group.cards || []), ...(group.pair || []), ...(group.rows || [])])
-    counts[node.status] = (counts[node.status] || 0) + 1
+function render(data) {
+  map = data
+  const counts = { gray: 0, red: 0, yellow: 0, green: 0 }
+  const each = (zone) => {
+    const out = []
+    for (const g of [...(zone.groups || []), ...(zone.side || [])])
+      out.push(...(g.nodes || []), ...(g.cards || []), ...(g.pair || []), ...(g.rows || []))
+    return out
+  }
+  for (const zone of data.zones) for (const node of each(zone)) counts[node.status] = (counts[node.status] || 0) + 1
 
-document.getElementById('counts').innerHTML = ORDER.filter(k => counts[k] || k === 'green').map(k => {
-  const c = getComputedStyle(document.documentElement).getPropertyValue('--' + k)
-  const label = (map.legend || []).find(l => l.key === k)
-  return `<span class="chip"><span class="swatch" style="background:${c.trim()}"></span>${esc(label ? label.label : k)} <b>${counts[k] || 0}</b></span>`
-}).join('')
+  $('#legend').innerHTML = data.legend.map(item => {
+    const c = getComputedStyle(document.documentElement).getPropertyValue('--' + item.key)
+    return `<div><span class="swatch" style="background:${c.trim()}"></span>${esc(item.label)}
+      <span style="color:var(--dim)">· ${esc(item.hint)}</span></div>`
+  }).join('')
+  $('#counts').innerHTML = ORDER.filter(k => counts[k] || k === 'green').map(k => {
+    const c = getComputedStyle(document.documentElement).getPropertyValue('--' + k)
+    const label = (data.legend.find(l => l.key === k) || {}).label || k
+    return `<span class="chip"><span class="swatch" style="background:${c.trim()}"></span>${esc(label)} <b>${counts[k] || 0}</b></span>`
+  }).join('')
+  const stamp = $('#updated')
+  if (stamp) stamp.textContent = data.updatedAt
 
-document.getElementById('map').insertAdjacentHTML('beforeend', map.zones.map(zone => `
-  <section class="zone" data-zone="${esc(zone.id)}">
-    <h2>${esc(zone.title)} <em>${esc(zone.note || '')}</em></h2>
-    ${zone.groups.map(groupHtml).join('')}
-  </section>`).join(''))
+  $('#map').insertAdjacentHTML('beforeend', data.zones.map(zone => `
+    <section class="zone" data-zone="${esc(zone.id)}">
+      <h2>${esc(zone.title)} <em>${esc(zone.note || '')}</em></h2>${zoneBody(zone)}
+    </section>`).join(''))
+
+  requestAnimationFrame(() => requestAnimationFrame(draw))
+}
 
 function boxOf(el, box) {
   const r = el.getBoundingClientRect()
@@ -131,41 +181,50 @@ function edgePoint(from, to) {
   const a = Math.atan2(dy, dx), cos = Math.cos(a), sin = Math.sin(a)
   const sx = Math.abs(cos) > 1e-6 ? (from.w / 2) / Math.abs(cos) : Infinity
   const sy = Math.abs(sin) > 1e-6 ? (from.h / 2) / Math.abs(sin) : Infinity
-  const d = Math.min(sx, sy) + 1
+  const d = Math.min(sx, sy) + 2
   return { x: from.x + cos * d, y: from.y + sin * d }
 }
+
 function draw() {
-  const box = document.getElementById('map').getBoundingClientRect()
-  const svg = document.getElementById('links')
-  svg.setAttribute('width', box.width); svg.setAttribute('height', box.height)
+  if (!map) return
+  const box = $('#map').getBoundingClientRect()
+  const svg = $('#links')
+  svg.setAttribute('width', box.width)
+  svg.setAttribute('height', box.height)
   svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`)
+
   const pos = new Map()
   for (const el of document.querySelectorAll('[data-id]')) pos.set(el.dataset.id, boxOf(el, box))
+
   const parts = []
-  ;(map.edges || []).forEach(([fromId, toId], i) => {
+  map.edges.forEach(([fromId, toId], i) => {
     const a = pos.get(fromId), b = pos.get(toId)
     if (!a || !b) return
     const p1 = edgePoint(a, b), p2 = edgePoint(b, a)
     const dx = p2.x - p1.x, dy = p2.y - p1.y
     const dist = Math.hypot(dx, dy) || 1
-    const bow = Math.min(22, dist * 0.14)
+    const bow = Math.min(20, dist * 0.13)
     const cx = (p1.x + p2.x) / 2 - (dy / dist) * bow
     const cy = (p1.y + p2.y) / 2 + (dx / dist) * bow
     parts.push(`<path d="M${p1.x},${p1.y} Q${cx},${cy} ${p2.x},${p2.y}" marker-end="url(#arrow)" data-i="${i}"/>`)
   })
+
   svg.innerHTML = `<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
-    <path d="M0,0 L8,4 L0,8 Z" fill="#5a6782" stroke="none"/></marker></defs>${parts.join('')}`
+    <path d="M0,0 L8,4 L0,8 Z" fill="rgba(150,170,200,.6)" stroke="none"/></marker></defs>${parts.join('')}`
+
   let step = 0
   for (const path of svg.querySelectorAll('path[data-i]')) {
     const len = path.getTotalLength()
-    path.style.strokeDasharray = `${len}`; path.style.strokeDashoffset = `${len}`
-    path.style.transition = `stroke-dashoffset .45s ease ${step++ * 18}ms`
+    path.style.strokeDasharray = `${len}`
+    path.style.strokeDashoffset = `${len}`
+    path.style.transition = `stroke-dashoffset .45s ease ${step++ * 16}ms`
     requestAnimationFrame(() => { path.style.strokeDashoffset = '0' })
   }
 }
-requestAnimationFrame(() => requestAnimationFrame(draw))
+
 let timer
 addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(draw, 140) })
+render((window.SUPERAGENT || {}).map || { zones: [], edges: [] })
 </script>
 </body>
 </html>

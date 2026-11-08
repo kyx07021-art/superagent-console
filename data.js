@@ -52,6 +52,7 @@ window.SUPERAGENT={
         "id": "receivers",
         "title": "消息接收器",
         "note": "消息从哪来",
+        "layout": "split",
         "groups": [
           {
             "title": "外部来源",
@@ -116,7 +117,9 @@ window.SUPERAGENT={
                 "note": "还没动"
               }
             ]
-          },
+          }
+        ],
+        "side": [
           {
             "title": "全部汇到这里",
             "cards": [
@@ -134,6 +137,7 @@ window.SUPERAGENT={
         "id": "maintenance",
         "title": "SuperAgent 状态维护",
         "note": "转发与记录",
+        "layout": "split",
         "groups": [
           {
             "cards": [
@@ -144,7 +148,9 @@ window.SUPERAGENT={
                 "note": "正在改造，还没接管全部消息。"
               }
             ]
-          },
+          }
+        ],
+        "side": [
           {
             "title": "挂在这里",
             "rows": [
@@ -202,6 +208,26 @@ window.SUPERAGENT={
           {
             "cards": [
               {
+                "id": "knowledge",
+                "name": "知识库",
+                "status": "yellow",
+                "note": "在找能改造的开源件。"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "id": "knowledge-api",
+                "name": "统一知识库接口",
+                "status": "gray",
+                "note": "还没动。"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
                 "id": "worker-manager",
                 "name": "Worker 管理器",
                 "status": "green",
@@ -213,16 +239,16 @@ window.SUPERAGENT={
             "title": "派生子会话",
             "pair": [
               {
-                "id": "worker-session",
-                "name": "Worker 会话",
-                "status": "yellow",
-                "note": "能开，长任务还在试。"
-              },
-              {
                 "id": "supervisor",
                 "name": "Supervisor 会话",
                 "status": "yellow",
                 "note": "在做。"
+              },
+              {
+                "id": "worker-session",
+                "name": "Worker 会话",
+                "status": "yellow",
+                "note": "能开，长任务还在试。"
               }
             ]
           },
@@ -245,18 +271,6 @@ window.SUPERAGENT={
                 "name": "多环境运行时",
                 "status": "yellow",
                 "note": "Codex 能切；DeepSeek 还差翻译"
-              },
-              {
-                "id": "knowledge-api",
-                "name": "统一知识库接口",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "knowledge",
-                "name": "知识库",
-                "status": "yellow",
-                "note": "在找开源件"
               },
               {
                 "id": "tools",
@@ -319,8 +333,8 @@ window.SUPERAGENT={
         "relay"
       ],
       [
-        "interaction",
-        "memory"
+        "memory",
+        "relay"
       ],
       [
         "cli-session",
@@ -336,23 +350,19 @@ window.SUPERAGENT={
       ],
       [
         "worker-manager",
-        "worker-session"
-      ],
-      [
-        "worker-manager",
         "supervisor"
       ],
       [
-        "worker-session",
-        "outbox"
+        "worker-manager",
+        "worker-session"
       ],
       [
         "supervisor",
         "outbox"
       ],
       [
-        "worker-manager",
-        "runtime"
+        "worker-session",
+        "outbox"
       ],
       [
         "worker-manager",
@@ -361,11 +371,15 @@ window.SUPERAGENT={
       [
         "knowledge-api",
         "knowledge"
+      ],
+      [
+        "worker-manager",
+        "runtime"
       ]
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T04:29:16.648Z",
+    "updatedAt": "2026-11-08T04:37:23.327Z",
     "providers": [
       {
         "id": "codex",
