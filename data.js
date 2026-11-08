@@ -136,18 +136,18 @@ window.SUPERAGENT={
       },
       "supervisor": {
         "name": "supervisor 会话",
-        "status": "yellow",
-        "note": "只盯 worker 会话。"
+        "status": "gray",
+        "note": "还没写，代码里没有它。"
       },
       "worker-session": {
         "name": "worker 会话",
-        "status": "yellow",
-        "note": "能开，长任务还在试。"
+        "status": "green",
+        "note": "能开、能跑、能回话。"
       },
       "outbox": {
         "name": "worker 消息 Outbox",
-        "status": "yellow",
-        "note": "汇报回消息接收器。"
+        "status": "green",
+        "note": "汇报能回消息接收器。"
       }
     },
     "edges": [
@@ -260,24 +260,33 @@ window.SUPERAGENT={
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T04:53:17.061Z",
-    "providers": [
-      {
-        "id": "codex",
-        "name": "Codex",
-        "ready": true
-      },
-      {
-        "id": "deepseek",
-        "name": "DeepSeek",
-        "ready": false
-      }
-    ],
+    "updatedAt": "2026-11-08T05:00:00.701Z",
     "router": {
-      "provider": "codex",
+      "provider": "deepseek",
       "online": true
     },
     "workers": [],
-    "recent": []
+    "recent": [
+      {
+        "at": "2026-11-08T04:55:32.090Z",
+        "kind": "reply",
+        "text": "你刚发来的消息在传递过程中变成了乱码（只收到一串问号），我这边无法还原内容。麻烦你重新发一次；如果方便，也可以再补一句想让我做什么。"
+      },
+      {
+        "at": "2026-11-08T04:55:33.305Z",
+        "kind": "batch",
+        "text": "处理了一批消息"
+      },
+      {
+        "at": "2026-11-08T04:55:45.202Z",
+        "kind": "reply",
+        "text": "OK"
+      },
+      {
+        "at": "2026-11-08T04:55:46.581Z",
+        "kind": "batch",
+        "text": "处理了一批消息"
+      }
+    ]
   }
 }
