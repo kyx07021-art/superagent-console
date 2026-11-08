@@ -49,6 +49,40 @@ window.SUPERAGENT={
         ]
       },
       {
+        "id": "maintenance",
+        "title": "SuperAgent 状态维护",
+        "note": "把用户消息送进去",
+        "groups": [
+          {
+            "cards": [
+              {
+                "id": "relay",
+                "name": "状态转发中心",
+                "status": "yellow",
+                "note": "收到用户消息就塞给整流器。"
+              }
+            ]
+          },
+          {
+            "title": "状态挂在这里",
+            "rows": [
+              {
+                "id": "interaction",
+                "name": "互动记录管理器",
+                "status": "gray",
+                "note": "还没动"
+              },
+              {
+                "id": "memory",
+                "name": "记忆管理器",
+                "status": "gray",
+                "note": "还没动"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "id": "receivers",
         "title": "消息接收器",
         "note": "消息从哪来",
@@ -121,7 +155,7 @@ window.SUPERAGENT={
         ],
         "side": [
           {
-            "title": "全部汇到这里",
+            "title": "全部塞给这里",
             "cards": [
               {
                 "id": "rectifier",
@@ -134,62 +168,34 @@ window.SUPERAGENT={
         ]
       },
       {
-        "id": "maintenance",
-        "title": "SuperAgent 状态维护",
-        "note": "转发与记录",
-        "layout": "split",
+        "id": "router",
+        "title": "Router 中枢",
+        "note": "一切的中心",
         "groups": [
           {
             "cards": [
               {
-                "id": "relay",
-                "name": "状态转发中心",
-                "status": "yellow",
-                "note": "正在改造，还没接管全部消息。"
+                "id": "router-manager",
+                "name": "Router 管理器",
+                "status": "green",
+                "note": "接活、分派、收尾都靠它。"
               }
             ]
-          }
-        ],
-        "side": [
+          },
           {
-            "title": "挂在这里",
-            "rows": [
-              {
-                "id": "interaction",
-                "name": "互动记录管理器",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "memory",
-                "name": "记忆管理器",
-                "status": "gray",
-                "note": "还没动"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "router",
-        "title": "Router 中枢",
-        "note": "先判断，再分派",
-        "groups": [
-          {
-            "title": "一条会话走完三格",
+            "title": "它管着这条会话",
             "cards": [
               {
                 "id": "cli-session",
                 "name": "CLI Router 会话",
                 "status": "green",
                 "note": "能跑一轮并回话。"
-              },
-              {
-                "id": "router-manager",
-                "name": "Router 管理器",
-                "status": "green",
-                "note": "分派和收尾都能用。"
-              },
+              }
+            ]
+          },
+          {
+            "title": "顺手抽个数",
+            "cards": [
               {
                 "id": "stats",
                 "name": "运行统计器",
@@ -208,26 +214,6 @@ window.SUPERAGENT={
           {
             "cards": [
               {
-                "id": "knowledge",
-                "name": "知识库",
-                "status": "yellow",
-                "note": "在找能改造的开源件。"
-              }
-            ]
-          },
-          {
-            "cards": [
-              {
-                "id": "knowledge-api",
-                "name": "统一知识库接口",
-                "status": "gray",
-                "note": "还没动。"
-              }
-            ]
-          },
-          {
-            "cards": [
-              {
                 "id": "worker-manager",
                 "name": "Worker 管理器",
                 "status": "green",
@@ -242,7 +228,7 @@ window.SUPERAGENT={
                 "id": "supervisor",
                 "name": "Supervisor 会话",
                 "status": "yellow",
-                "note": "在做。"
+                "note": "只盯 Worker 会话。"
               },
               {
                 "id": "worker-session",
@@ -259,7 +245,7 @@ window.SUPERAGENT={
                 "id": "outbox",
                 "name": "Worker 消息 Outbox",
                 "status": "green",
-                "note": "汇报能送回整流器。"
+                "note": "汇报回到消息接收器。"
               }
             ]
           },
@@ -273,6 +259,18 @@ window.SUPERAGENT={
                 "note": "Codex 能切；DeepSeek 还差翻译"
               },
               {
+                "id": "knowledge-api",
+                "name": "统一知识库接口",
+                "status": "gray",
+                "note": "还没动"
+              },
+              {
+                "id": "knowledge",
+                "name": "知识库",
+                "status": "yellow",
+                "note": "在找开源件"
+              },
+              {
                 "id": "tools",
                 "name": "私有工具与 Skills",
                 "status": "gray",
@@ -284,6 +282,26 @@ window.SUPERAGENT={
       }
     ],
     "edges": [
+      [
+        "console",
+        "relay"
+      ],
+      [
+        "wechat-bridge",
+        "relay"
+      ],
+      [
+        "memory",
+        "relay"
+      ],
+      [
+        "interaction",
+        "relay"
+      ],
+      [
+        "relay",
+        "rectifier"
+      ],
       [
         "wechat",
         "rectifier"
@@ -322,27 +340,11 @@ window.SUPERAGENT={
       ],
       [
         "rectifier",
-        "relay"
-      ],
-      [
-        "relay",
-        "cli-session"
-      ],
-      [
-        "cli-session",
         "router-manager"
       ],
       [
-        "interaction",
-        "relay"
-      ],
-      [
-        "memory",
-        "relay"
-      ],
-      [
-        "relay",
-        "console"
+        "router-manager",
+        "cli-session"
       ],
       [
         "router-manager",
@@ -361,16 +363,17 @@ window.SUPERAGENT={
         "worker-session"
       ],
       [
+        "worker-manager",
+        "stats"
+      ],
+      [
         "worker-session",
         "outbox"
       ],
       [
         "outbox",
-        "worker-report"
-      ],
-      [
-        "worker-manager",
-        "stats"
+        "worker-report",
+        "loop"
       ],
       [
         "worker-manager",
@@ -387,7 +390,7 @@ window.SUPERAGENT={
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T04:39:52.764Z",
+    "updatedAt": "2026-11-08T04:45:26.095Z",
     "providers": [
       {
         "id": "codex",
