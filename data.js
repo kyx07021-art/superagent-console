@@ -23,272 +23,141 @@ window.SUPERAGENT={
         "hint": "跑通并验过"
       }
     ],
-    "zones": [
-      {
-        "id": "entry",
-        "title": "交互入口",
-        "note": "人从哪里进来",
-        "layout": "row",
-        "groups": [
-          {
-            "nodes": [
-              {
-                "id": "console",
-                "name": "SuperAgent 工作台网页",
-                "status": "yellow",
-                "note": "页面能打开，按钮正在试。"
-              },
-              {
-                "id": "wechat-bridge",
-                "name": "微信桥接",
-                "status": "green",
-                "note": "收发微信都在用。"
-              }
-            ]
-          }
-        ]
+    "nodes": {
+      "console": {
+        "name": "SuperAgent 工作台网页",
+        "status": "yellow",
+        "note": "页面能打开，按钮正在试。"
       },
-      {
-        "id": "maintenance",
-        "title": "SuperAgent 状态维护",
-        "note": "把用户消息送进去",
-        "groups": [
-          {
-            "cards": [
-              {
-                "id": "relay",
-                "name": "状态转发中心",
-                "status": "yellow",
-                "note": "收到用户消息就塞给整流器。"
-              }
-            ]
-          },
-          {
-            "title": "状态挂在这里",
-            "rows": [
-              {
-                "id": "interaction",
-                "name": "互动记录管理器",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "memory",
-                "name": "记忆管理器",
-                "status": "gray",
-                "note": "还没动"
-              }
-            ]
-          }
-        ]
+      "wechat-bridge": {
+        "name": "微信桥接",
+        "status": "green",
+        "note": "收发微信都在用。"
       },
-      {
-        "id": "receivers",
-        "title": "消息接收器",
-        "note": "消息从哪来",
-        "layout": "split",
-        "groups": [
-          {
-            "title": "外部来源",
-            "rows": [
-              {
-                "id": "wechat",
-                "name": "微信监听器",
-                "status": "green",
-                "note": "能读，断了能接上"
-              },
-              {
-                "id": "wecom",
-                "name": "企业微信监听器",
-                "status": "green",
-                "note": "能读，断了能接上"
-              },
-              {
-                "id": "mail",
-                "name": "邮件监听器",
-                "status": "yellow",
-                "note": "能收信，还在调"
-              },
-              {
-                "id": "campus",
-                "name": "上财校园网监听器",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "feishu",
-                "name": "飞书监听器",
-                "status": "gray",
-                "note": "还没动"
-              }
-            ]
-          },
-          {
-            "title": "内部来源",
-            "rows": [
-              {
-                "id": "timer",
-                "name": "定时任务器",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "console-events",
-                "name": "自建工作台事件",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "worker-report",
-                "name": "Worker 汇报",
-                "status": "yellow",
-                "note": "代码在，没实跑"
-              },
-              {
-                "id": "reentry",
-                "name": "单条补录器",
-                "status": "gray",
-                "note": "还没动"
-              }
-            ]
-          }
-        ],
-        "side": [
-          {
-            "title": "全部塞给这里",
-            "cards": [
-              {
-                "id": "rectifier",
-                "name": "消息整流器",
-                "status": "green",
-                "note": "去重、合批、回执都跑通。"
-              }
-            ]
-          }
-        ]
+      "relay": {
+        "name": "SuperAgent 状态转发中心",
+        "status": "yellow",
+        "note": "收发都经它记录，Router 的记忆从这取。"
       },
-      {
-        "id": "router",
-        "title": "Router 中枢",
-        "note": "一切的中心",
-        "groups": [
-          {
-            "cards": [
-              {
-                "id": "router-manager",
-                "name": "Router 管理器",
-                "status": "green",
-                "note": "接活、分派、收尾都靠它。"
-              }
-            ]
-          },
-          {
-            "title": "它管着这条会话",
-            "cards": [
-              {
-                "id": "cli-session",
-                "name": "CLI Router 会话",
-                "status": "green",
-                "note": "能跑一轮并回话。"
-              }
-            ]
-          },
-          {
-            "title": "顺手抽个数",
-            "cards": [
-              {
-                "id": "stats",
-                "name": "运行统计器",
-                "status": "yellow",
-                "note": "在记数，还没做报表。"
-              }
-            ]
-          }
-        ]
+      "memory": {
+        "name": "SuperAgent 记忆管理器",
+        "status": "red",
+        "note": "接口谈好了，还没写。"
       },
-      {
-        "id": "worker",
-        "title": "Worker 执行模块",
-        "note": "真正干活的层",
-        "groups": [
-          {
-            "cards": [
-              {
-                "id": "worker-manager",
-                "name": "Worker 管理器",
-                "status": "green",
-                "note": "建、派、收、换环境都能用。"
-              }
-            ]
-          },
-          {
-            "title": "派生子会话",
-            "pair": [
-              {
-                "id": "supervisor",
-                "name": "Supervisor 会话",
-                "status": "yellow",
-                "note": "只盯 Worker 会话。"
-              },
-              {
-                "id": "worker-session",
-                "name": "Worker 会话",
-                "status": "yellow",
-                "note": "能开，长任务还在试。"
-              }
-            ]
-          },
-          {
-            "title": "汇报回传",
-            "cards": [
-              {
-                "id": "outbox",
-                "name": "Worker 消息 Outbox",
-                "status": "green",
-                "note": "汇报回到消息接收器。"
-              }
-            ]
-          },
-          {
-            "title": "跑在什么上面",
-            "rows": [
-              {
-                "id": "runtime",
-                "name": "多环境运行时",
-                "status": "yellow",
-                "note": "Codex 能切；DeepSeek 还差翻译"
-              },
-              {
-                "id": "knowledge-api",
-                "name": "统一知识库接口",
-                "status": "gray",
-                "note": "还没动"
-              },
-              {
-                "id": "knowledge",
-                "name": "知识库",
-                "status": "yellow",
-                "note": "在找开源件"
-              },
-              {
-                "id": "tools",
-                "name": "私有工具与 Skills",
-                "status": "gray",
-                "note": "还没动"
-              }
-            ]
-          }
-        ]
+      "interaction": {
+        "name": "互动记录管理器",
+        "status": "red",
+        "note": "接口谈好了，还没写。"
+      },
+      "timer": {
+        "name": "定时任务器",
+        "status": "gray",
+        "note": "还没动"
+      },
+      "wechat": {
+        "name": "微信监听器",
+        "status": "green",
+        "note": "能读，断了能接上"
+      },
+      "wecom": {
+        "name": "企业微信监听器",
+        "status": "green",
+        "note": "能读，断了能接上"
+      },
+      "mail": {
+        "name": "邮件监听器",
+        "status": "yellow",
+        "note": "能收信，还在调"
+      },
+      "campus": {
+        "name": "上财校园网监听器",
+        "status": "gray",
+        "note": "还没动"
+      },
+      "x": {
+        "name": "X 监听器",
+        "status": "gray",
+        "note": "还没动"
+      },
+      "console-events": {
+        "name": "自建工作台事件",
+        "status": "gray",
+        "note": "还没动"
+      },
+      "reentry": {
+        "name": "单条补录器",
+        "status": "gray",
+        "note": "还没动"
+      },
+      "worker-report": {
+        "name": "worker 汇报",
+        "status": "green",
+        "note": "汇报能回来"
+      },
+      "rectifier": {
+        "name": "消息整流器",
+        "status": "green",
+        "note": "去重、合批、回执都跑通。"
+      },
+      "cli-session": {
+        "name": "CLI router 会话",
+        "status": "green",
+        "note": "能跑一轮并回话。"
+      },
+      "router-manager": {
+        "name": "router 管理器",
+        "status": "green",
+        "note": "接活、分派、收尾都靠它。"
+      },
+      "stats": {
+        "name": "运行统计器",
+        "status": "yellow",
+        "note": "在记数，还没做报表。"
+      },
+      "knowledge-api": {
+        "name": "统一知识库接口",
+        "status": "yellow",
+        "note": "在接，还没统一。"
+      },
+      "obsidian": {
+        "name": "Obsidian 个人笔记",
+        "status": "gray",
+        "note": "还没接"
+      },
+      "papers": {
+        "name": "专业书籍、论文",
+        "status": "gray",
+        "note": "还没接"
+      },
+      "worker-manager": {
+        "name": "worker 管理器",
+        "status": "green",
+        "note": "建、派、收、换环境都能用。"
+      },
+      "supervisor": {
+        "name": "supervisor 会话",
+        "status": "yellow",
+        "note": "只盯 worker 会话。"
+      },
+      "worker-session": {
+        "name": "worker 会话",
+        "status": "yellow",
+        "note": "能开，长任务还在试。"
+      },
+      "outbox": {
+        "name": "worker 消息 Outbox",
+        "status": "yellow",
+        "note": "汇报回消息接收器。"
       }
-    ],
+    },
     "edges": [
       [
-        "console",
-        "relay"
+        "relay",
+        "console"
       ],
       [
-        "wechat-bridge",
-        "relay"
+        "relay",
+        "wechat-bridge"
       ],
       [
         "memory",
@@ -319,11 +188,7 @@ window.SUPERAGENT={
         "rectifier"
       ],
       [
-        "feishu",
-        "rectifier"
-      ],
-      [
-        "timer",
+        "x",
         "rectifier"
       ],
       [
@@ -331,40 +196,44 @@ window.SUPERAGENT={
         "rectifier"
       ],
       [
-        "reentry",
-        "rectifier"
+        "rectifier",
+        "timer"
       ],
       [
-        "worker-report",
-        "rectifier"
+        "rectifier",
+        "reentry"
+      ],
+      [
+        "rectifier",
+        "worker-report"
       ],
       [
         "rectifier",
         "router-manager"
       ],
       [
-        "router-manager",
-        "cli-session"
+        "cli-session",
+        "router-manager"
       ],
       [
         "router-manager",
         "stats"
       ],
       [
-        "router-manager",
-        "worker-manager"
+        "worker-manager",
+        "stats"
       ],
       [
         "worker-manager",
         "supervisor"
       ],
       [
-        "supervisor",
+        "worker-manager",
         "worker-session"
       ],
       [
-        "worker-manager",
-        "stats"
+        "supervisor",
+        "worker-session"
       ],
       [
         "worker-session",
@@ -377,20 +246,21 @@ window.SUPERAGENT={
       ],
       [
         "worker-manager",
-        "knowledge-api"
+        "knowledge-api",
+        "both"
       ],
       [
         "knowledge-api",
-        "knowledge"
+        "obsidian"
       ],
       [
-        "worker-manager",
-        "runtime"
+        "knowledge-api",
+        "papers"
       ]
     ]
   },
   "snapshot": {
-    "updatedAt": "2026-11-08T04:45:26.095Z",
+    "updatedAt": "2026-11-08T04:53:17.061Z",
     "providers": [
       {
         "id": "codex",

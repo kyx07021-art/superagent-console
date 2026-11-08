@@ -7,84 +7,103 @@
 <title>SuperAgent 系统实现状态图</title>
 <style>
   :root {
-    --bg: #0a0c10; --line: #222937; --text: #e8ebf1; --muted: #8b94a5; --dim: #5c6577;
+    --bg: #0a0c10; --text: #e8ebf1; --muted: #8b94a5; --dim: #5c6577;
     --gray: #5b6474; --red: #f87171; --yellow: #f5b13d; --green: #34d399;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
-  body { font: 14px/1.55 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; }
+  body { font: 14px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; }
 
   header.top { display: flex; align-items: flex-end; gap: 26px; flex-wrap: wrap;
-    padding: 24px 34px 15px; border-bottom: 1px solid var(--line); }
-  header.top h1 { margin: 0; font-size: 19px; letter-spacing: .4px; font-weight: 650; }
-  header.top .lede { margin: 5px 0 0; color: var(--muted); font-size: 12.5px; }
+    padding: 22px 32px 14px; border-bottom: 1px solid #202634; }
+  header.top h1 { margin: 0; font-size: 18px; letter-spacing: .4px; font-weight: 650; }
+  header.top .lede { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
   .counts { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
   .chip { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 999px;
-    border: 1px solid var(--line); background: #12161e; font-size: 12px; }
+    border: 1px solid #262d3c; background: #12161e; font-size: 12px; }
   .chip b { font-variant-numeric: tabular-nums; font-weight: 650; }
   .swatch { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
-  .legend { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 34px;
-    border-bottom: 1px solid var(--line); background: #0c0f14; }
+  .legend { display: flex; gap: 22px; flex-wrap: wrap; padding: 10px 32px;
+    border-bottom: 1px solid #202634; background: #0c0f14; }
   .legend div { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
 
-  main { padding: 26px 34px 10px; max-width: none; margin: 0; }
-  /* 用 flex 分三列，宽高可预测：入口横跨顶部，中间一列放转发中心和 Router。 */
-  .map { position: relative; padding-bottom: 30px; }
-  .band { display: flex; justify-content: center; margin-bottom: 26px; }
-  .board { display: flex; gap: 26px; align-items: flex-start; }
-  .col { min-width: 0; }
-  .col.left { flex: 0 0 380px; }
-  .col.mid { flex: 1 1 auto; display: flex; flex-direction: column; gap: 26px; }
-  .col.right { flex: 0 0 330px; }
+  main { padding: 24px 32px 6px; max-width: none; margin: 0; }
 
-  #links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: visible; }
-  #links path { fill: none; stroke: #5c6884; stroke-width: 1.3; stroke-linecap: round; }
-  #links path.loop { stroke-dasharray: 4 4; stroke: #4a5470; }
+  .map {
+    position: relative;
+    display: grid;
+    grid-template-columns: 520px 250px 470px;
+    grid-template-areas:
+      ".    entry  entry"
+      "recv maint  maint"
+      "recv router worker";
+    gap: 30px 26px;
+    justify-content: center;
+    padding-bottom: 34px;
+  }
+  #links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+  #links path { fill: none; stroke: #7b88a5; stroke-width: 1.3; stroke-linecap: round; }
+  #links path.loop { stroke-dasharray: 4 4; stroke: #5d6885; }
 
-  .zone { position: relative; z-index: 1; min-width: 0; }
-  .zone > h2 { margin: 0 0 12px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
-    font-size: 12px; letter-spacing: 1.6px; font-weight: 600; color: var(--muted);
-    display: flex; align-items: baseline; gap: 9px; }
-  .zone > h2 em { font-style: normal; font-size: 11.5px; letter-spacing: 0; color: var(--dim); font-weight: 400; }
+  .module { position: relative; }
+  .mlabel { font-size: 11px; letter-spacing: 1.5px; color: var(--muted); margin: 0 0 8px 3px; font-weight: 600; }
+  .box { position: relative; border-radius: 14px; padding: 16px; }
+  .box::before { content: ""; position: absolute; inset: 0; z-index: 0;
+    border: 1px solid #2b3346; border-radius: 14px; background: #10141c; }
+  .box > * { position: relative; z-index: 2; }
 
-  .group + .group { margin-top: 12px; }
-  .gtitle { font-size: 11px; letter-spacing: .6px; color: var(--dim); margin: 0 0 6px; }
-  .cards, .rows { display: grid; gap: 8px; }
-  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .cards.row { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-  .cards.row .node { flex: 0 0 330px; }
+  .m-entry { grid-area: entry; justify-self: start; width: 430px; }
+  .m-recv { grid-area: recv; }
+  .m-maint { grid-area: maint; }
+  .m-router { grid-area: router; }
+  .m-worker { grid-area: worker; }
 
-  .split { display: flex; gap: 16px; align-items: flex-start; }
-  .split .main { flex: 1 1 auto; min-width: 0; }
-  .split .side { flex: 0 0 116px; }
+  .node[data-status="green"],  .row[data-status="green"]  { --fill:#12301f; --edge:#2f6444; --dot:#34d399; --name:#e3fbef; --note:#8fbfa6; }
+  .node[data-status="yellow"], .row[data-status="yellow"] { --fill:#332a11; --edge:#6f5623; --dot:#f5b13d; --name:#fcefd5; --note:#c2aa7d; }
+  .node[data-status="red"],    .row[data-status="red"]    { --fill:#3c1a1d; --edge:#703034; --dot:#f87171; --name:#ffe2e2; --note:#c9969a; }
+  .node[data-status="gray"],   .row[data-status="gray"]   { --fill:#1b1f28; --edge:#323a49; --dot:#788293; --name:#c3cad6; --note:#8792a3; }
 
-  .node[data-status="green"],  .row[data-status="green"]  { --fill:#10281b; --edge:#2a5c3f; --dot:#34d399; --name:#e2fbee; --note:#8fbfa6; }
-  .node[data-status="yellow"], .row[data-status="yellow"] { --fill:#302710; --edge:#6b5322; --dot:#f5b13d; --name:#fbecd0; --note:#bfa87c; }
-  .node[data-status="red"],    .row[data-status="red"]    { --fill:#3a1a1c; --edge:#6b2c30; --dot:#f87171; --name:#ffe0e0; --note:#c89498; }
-  .node[data-status="gray"],   .row[data-status="gray"]   { --fill:#1c2029; --edge:#333b49; --dot:#788293; --name:#c3cad6; --note:#8792a3; }
-
-  .node { background: var(--fill); border: 1px solid var(--edge); border-radius: 10px; padding: 11px 13px;
-    min-width: 0; transition: transform .16s ease, border-color .16s ease;
-    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 14ms); }
+  .node { background: var(--fill); border: 1px solid var(--edge); border-radius: 9px;
+    padding: 10px 12px; z-index: 2;
+    transition: transform .16s ease, border-color .16s ease;
+    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 12ms); }
   .node:hover { transform: translateY(-1px); border-color: var(--dot); }
-  .node .name { font-size: 13.5px; font-weight: 600; color: var(--name); overflow-wrap: anywhere; }
-  .node .note { font-size: 12px; color: var(--note); margin-top: 3px; overflow-wrap: anywhere; }
+  .node .name { font-size: 12.8px; font-weight: 600; color: var(--name); overflow-wrap: anywhere; }
+  .node .note { font-size: 11px; color: var(--note); margin-top: 2px; overflow-wrap: anywhere; }
 
   .row { display: flex; align-items: center; gap: 8px; background: var(--fill); border: 1px solid var(--edge);
-    border-radius: 8px; padding: 6px 9px; min-width: 0;
-    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 14ms); }
-  .row .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); flex: 0 0 auto; }
-  .row .nm { flex: 1 1 auto; min-width: 0; font-size: 12.4px; color: var(--name);
+    border-radius: 7px; padding: 6px 9px; z-index: 2; min-width: 0;
+    opacity: 0; animation: rise .3s ease forwards; animation-delay: calc(var(--i) * 12ms); }
+  .row .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dot); flex: 0 0 auto; }
+  .row .nm { flex: 1 1 auto; min-width: 0; font-size: 12.2px; color: var(--name);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row .nt { flex: 0 0 auto; font-size: 10.5px; color: var(--note); white-space: nowrap; }
-  @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-  footer { padding: 0 34px 26px; color: var(--dim); font-size: 11.5px; display: flex; gap: 18px; flex-wrap: wrap; }
+  @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .entry-row { display: flex; gap: 14px; }
+  .entry-row .node { flex: 1 1 0; }
+
+  .recv { display: flex; gap: 34px; align-items: center; }
+  .recv-list { flex: 1 1 auto; display: grid; gap: 7px; }
+  .recv-stage { flex: 0 0 140px; }
+
+  .maint { display: flex; gap: 20px; align-items: center; }
+  .maint-main { flex: 0 0 250px; }
+  .maint-side { flex: 1 1 auto; display: grid; gap: 10px; }
+
+  .stack { display: grid; gap: 12px; }
+
+  .work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 20px; align-items: start; }
+  .work .col { display: grid; gap: 10px; }
+
+  footer { padding: 0 32px 26px; color: var(--dim); font-size: 11.5px; display: flex; gap: 18px; flex-wrap: wrap; }
   footer code { font-family: ui-monospace, Consolas, monospace; color: var(--muted); }
   a { color: #6ea8fe; text-decoration: none; }
-  @media (max-width: 1200px) {
-    .board { flex-wrap: wrap; }
-    .col.left, .col.right { flex: 1 1 320px; }
-    .col.mid { flex: 1 1 100%; order: -1; }
+
+  @media (max-width: 1320px) {
+    .map { grid-template-columns: 1fr;
+      grid-template-areas: "entry" "maint" "recv" "router" "worker"; justify-content: stretch; }
+    .m-entry { width: auto; }
   }
 </style>
 </head>
@@ -92,7 +111,7 @@
 <header><div class="brand">SuperAgent</div><nav><a href="./">工作台</a><a class="on" href="progress">进度</a></nav><div class="counts" id="counts"></div></header>
 
 <div class="legend" id="legend"></div>
-<main><div class="map" id="map"><svg id="links"></svg><div id="body"></div></div></main>
+<main><div class="map" id="map"><svg id="links"></svg><div id="body" style="display:contents"></div></div></main>
 
 <script src="data.js"></script>
 <script>
@@ -103,67 +122,78 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 let map = null
 let index = 0
 
-function nodeCard(node) {
-  return `<article class="node" data-id="${esc(node.id)}" data-status="${node.status}" style="--i:${index++}">
-    <div class="name">${esc(node.name)}</div><div class="note">${esc(node.note)}</div></article>`
-}
-function nodeRow(node) {
-  return `<div class="row" data-id="${esc(node.id)}" data-status="${node.status}" style="--i:${index++}">
-    <span class="dot"></span><span class="nm">${esc(node.name)}</span><span class="nt">${esc(node.note)}</span></div>`
-}
-function groupHtml(group) {
-  const head = group.title ? `<div class="gtitle">${esc(group.title)}</div>` : ''
-  let body
-  if (group.rows) body = `<div class="rows">${group.rows.map(nodeRow).join('')}</div>`
-  else if (group.pair) body = `<div class="pair">${group.pair.map(nodeCard).join('')}</div>`
-  else body = `<div class="cards">${(group.nodes || group.cards || []).map(nodeCard).join('')}</div>`
-  return `<div class="group">${head}${body}</div>`
-}
-function zoneBody(zone) {
-  if (zone.layout === 'row') return `<div class="cards row">${zone.groups[0].nodes.map(nodeCard).join('')}</div>`
-  if (zone.layout === 'split') {
-    return `<div class="split"><div class="main">${zone.groups.map(groupHtml).join('')}</div>
-      <div class="side">${(zone.side || []).map(groupHtml).join('')}</div></div>`
+function node(id, asRow) {
+  const n = map.nodes[id]
+  if (!n) return ''
+  if (asRow) {
+    return `<div class="row" data-id="${esc(id)}" data-status="${n.status}" style="--i:${index++}">
+      <span class="dot"></span><span class="nm">${esc(n.name)}</span><span class="nt">${esc(n.note)}</span></div>`
   }
-  return zone.groups.map(groupHtml).join('')
-}
-function zoneHtml(zone) {
-  return `<section class="zone" data-zone="${esc(zone.id)}">
-    <h2>${esc(zone.title)} <em>${esc(zone.note || '')}</em></h2>${zoneBody(zone)}</section>`
+  return `<article class="node" data-id="${esc(id)}" data-status="${n.status}" style="--i:${index++}">
+    <div class="name">${esc(n.name)}</div><div class="note">${esc(n.note)}</div></article>`
 }
 
 function render(data) {
   map = data
   const counts = { gray: 0, red: 0, yellow: 0, green: 0 }
-  const each = zone => {
-    const out = []
-    for (const g of [...(zone.groups || []), ...(zone.side || [])])
-      out.push(...(g.nodes || []), ...(g.cards || []), ...(g.pair || []), ...(g.rows || []))
-    return out
-  }
-  for (const zone of data.zones) for (const node of each(zone)) counts[node.status] = (counts[node.status] || 0) + 1
+  for (const n of Object.values(data.nodes)) counts[n.status] = (counts[n.status] || 0) + 1
 
   $('#legend').innerHTML = data.legend.map(item => {
     const c = getComputedStyle(document.documentElement).getPropertyValue('--' + item.key)
     return `<div><span class="swatch" style="background:${c.trim()}"></span>${esc(item.label)}
       <span style="color:var(--dim)">· ${esc(item.hint)}</span></div>`
   }).join('')
-  $('#counts').innerHTML = ORDER.filter(k => counts[k] || k === 'green').map(k => {
+  $('#counts').innerHTML = ORDER.filter(k => counts[k]).map(k => {
     const c = getComputedStyle(document.documentElement).getPropertyValue('--' + k)
     const label = (data.legend.find(l => l.key === k) || {}).label || k
-    return `<span class="chip"><span class="swatch" style="background:${c.trim()}"></span>${esc(label)} <b>${counts[k] || 0}</b></span>`
+    return `<span class="chip"><span class="swatch" style="background:${c.trim()}"></span>${esc(label)} <b>${counts[k]}</b></span>`
   }).join('')
   const stamp = $('#updated')
   if (stamp) stamp.textContent = data.updatedAt
 
-  const byId = id => data.zones.find(z => z.id === id)
-  const band = byId('entry') ? `<div class="band">${zoneHtml(byId('entry'))}</div>` : ''
-  const mid = ['maintenance', 'router'].map(id => byId(id)).filter(Boolean).map(zoneHtml).join('')
-  $('#body').innerHTML = `${band}<div class="board">
-    <div class="col left">${byId('receivers') ? zoneHtml(byId('receivers')) : ''}</div>
-    <div class="col mid">${mid}</div>
-    <div class="col right">${byId('worker') ? zoneHtml(byId('worker')) : ''}</div>
-  </div>`
+  const r = id => node(id, true)
+  const c = id => node(id, false)
+
+  $('#body').innerHTML = `
+    <section class="module m-entry">
+      <div class="mlabel">用户交互入口</div>
+      <div class="box"><div class="entry-row">${c('console')}${c('wechat-bridge')}</div></div>
+    </section>
+
+    <section class="module m-recv">
+      <div class="mlabel">消息接收器</div>
+      <div class="box"><div class="recv">
+        <div class="recv-list">
+          ${r('timer')}${r('wechat')}${r('wecom')}${r('mail')}${r('campus')}${r('x')}${r('console-events')}${r('reentry')}${r('worker-report')}
+        </div>
+        <div class="recv-stage">${c('rectifier')}</div>
+      </div></div>
+    </section>
+
+    <section class="module m-maint">
+      <div class="mlabel">SuperAgent 状态维护模块</div>
+      <div class="box"><div class="maint">
+        <div class="maint-main">${c('relay')}</div>
+        <div class="maint-side">${c('memory')}${c('interaction')}</div>
+      </div></div>
+    </section>
+
+    <section class="module m-router">
+      <div class="mlabel">router 中枢</div>
+      <div class="box"><div class="stack">${c('cli-session')}${c('router-manager')}${c('stats')}</div></div>
+    </section>
+
+    <section class="module m-worker">
+      <div class="mlabel">Worker 执行模块</div>
+      <div class="box"><div class="work">
+        <div class="col">${c('knowledge-api')}</div>
+        <div class="col">${c('obsidian')}${c('papers')}</div>
+        <div class="col">${c('worker-manager')}</div>
+        <div class="col">${c('supervisor')}${c('worker-session')}</div>
+        <div class="col">${c('outbox')}</div>
+        <div class="col"></div>
+      </div></div>
+    </section>`
 
   requestAnimationFrame(() => requestAnimationFrame(draw))
 }
@@ -172,15 +202,32 @@ function boxOf(el, box) {
   const r = el.getBoundingClientRect()
   return { x: r.left - box.left + r.width / 2, y: r.top - box.top + r.height / 2, w: r.width, h: r.height }
 }
-// 从某条边的中点出去
+
+// 按两块卡片的位置关系选边：先看投影是否重叠，再看哪个方向的间隙更小。
+function pickSides(a, b) {
+  const ax1 = a.x - a.w / 2, ax2 = a.x + a.w / 2, ay1 = a.y - a.h / 2, ay2 = a.y + a.h / 2
+  const bx1 = b.x - b.w / 2, bx2 = b.x + b.w / 2, by1 = b.y - b.h / 2, by2 = b.y + b.h / 2
+  const overlapX = Math.min(ax2, bx2) - Math.max(ax1, bx1)
+  const overlapY = Math.min(ay2, by2) - Math.max(ay1, by1)
+  const dx = b.x - a.x, dy = b.y - a.y
+  const horizontal = () => dx >= 0 ? ['right', 'left'] : ['left', 'right']
+  const vertical = () => dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom']
+  if (overlapX > 0 && overlapY > 0) return Math.abs(dx) >= Math.abs(dy) ? horizontal() : vertical()
+  if (overlapX > 0) return vertical()
+  if (overlapY > 0) return horizontal()
+  const gapX = Math.abs(dx) - (a.w + b.w) / 2
+  const gapY = Math.abs(dy) - (a.h + b.h) / 2
+  return gapX <= gapY ? horizontal() : vertical()
+}
+
 function sidePoint(rect, side) {
   if (side === 'left') return { x: rect.x - rect.w / 2, y: rect.y }
   if (side === 'right') return { x: rect.x + rect.w / 2, y: rect.y }
   if (side === 'top') return { x: rect.x, y: rect.y - rect.h / 2 }
   return { x: rect.x, y: rect.y + rect.h / 2 }
 }
-// 横平竖直、拐角带圆角
-function elbow(points, radius = 9) {
+
+function elbow(points, radius = 8) {
   if (points.length < 2) return ''
   let d = `M${points[0].x},${points[0].y}`
   for (let i = 1; i < points.length - 1; i++) {
@@ -189,9 +236,9 @@ function elbow(points, radius = 9) {
     const v2 = { x: next.x - cur.x, y: next.y - cur.y }
     const l1 = Math.hypot(v1.x, v1.y), l2 = Math.hypot(v2.x, v2.y)
     if (l1 < 1 || l2 < 1) { d += ` L${cur.x},${cur.y}`; continue }
-    const r = Math.min(radius, l1 / 2, l2 / 2)
-    const a = { x: cur.x - (v1.x / l1) * r, y: cur.y - (v1.y / l1) * r }
-    const b = { x: cur.x + (v2.x / l2) * r, y: cur.y + (v2.y / l2) * r }
+    const rr = Math.min(radius, l1 / 2, l2 / 2)
+    const a = { x: cur.x - (v1.x / l1) * rr, y: cur.y - (v1.y / l1) * rr }
+    const b = { x: cur.x + (v2.x / l2) * rr, y: cur.y + (v2.y / l2) * rr }
     d += ` L${a.x},${a.y} Q${cur.x},${cur.y} ${b.x},${b.y}`
   }
   const last = points[points.length - 1]
@@ -209,51 +256,81 @@ function draw() {
   const pos = new Map()
   for (const el of document.querySelectorAll('[data-id]')) pos.set(el.dataset.id, boxOf(el, box))
 
-  const parts = []
+  const routes = []
   map.edges.forEach(([fromId, toId, kind], i) => {
     const a = pos.get(fromId), b = pos.get(toId)
     if (!a || !b) return
-    let points, cls = ''
     if (kind === 'loop') {
-      const floor = box.height - 8
+      const floor = box.height - 10
       const start = sidePoint(a, 'bottom')
       const end = sidePoint(b, 'left')
-      const laneX = 16
-      points = [start, { x: start.x, y: floor }, { x: laneX, y: floor }, { x: laneX, y: end.y }, end]
-      cls = 'loop'
-    } else {
-      const dx = b.x - a.x, dy = b.y - a.y
-      if (Math.abs(dx) >= Math.abs(dy)) {
-        const p1 = sidePoint(a, dx >= 0 ? 'right' : 'left')
-        const p2 = sidePoint(b, dx >= 0 ? 'left' : 'right')
-        const midX = (p1.x + p2.x) / 2
-        points = [p1, { x: midX, y: p1.y }, { x: midX, y: p2.y }, p2]
-      } else {
-        const p1 = sidePoint(a, dy >= 0 ? 'bottom' : 'top')
-        const p2 = sidePoint(b, dy >= 0 ? 'top' : 'bottom')
-        const midY = (p1.y + p2.y) / 2
-        points = [p1, { x: p1.x, y: midY }, { x: p2.x, y: midY }, p2]
-      }
+      routes.push({ i, cls: 'loop', both: false, entry: 'left', toId,
+        points: [start, { x: start.x, y: floor }, { x: 16, y: floor }, { x: 16, y: end.y }, end] })
+      return
     }
-    parts.push(`<path class="${cls}" d="${elbow(points)}" marker-end="url(#arrow)" data-i="${i}"/>`)
+    const [fromSide, toSide] = pickSides(a, b)
+    const p1 = sidePoint(a, fromSide)
+    const p2 = sidePoint(b, toSide)
+    let points
+    if (fromSide === 'left' || fromSide === 'right') {
+      const midX = (p1.x + p2.x) / 2
+      points = [p1, { x: midX, y: p1.y }, { x: midX, y: p2.y }, p2]
+    } else {
+      const midY = (p1.y + p2.y) / 2
+      points = [p1, { x: p1.x, y: midY }, { x: p2.x, y: midY }, p2]
+    }
+    routes.push({ i, cls: '', both: kind === 'both', entry: toSide, toId, points })
   })
 
-  svg.innerHTML = `<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
-    <path d="M0,0 L8,4 L0,8 Z" fill="#6b7794" stroke="none"/></marker></defs>${parts.join('')}`
+  const groups = new Map()
+  for (const route of routes) {
+    const key = route.toId + ':' + route.entry
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(route)
+  }
+  for (const list of groups.values()) {
+    if (list.length < 2) continue
+    const target = pos.get(list[0].toId)
+    const onVertical = list[0].entry === 'left' || list[0].entry === 'right'
+    const span = onVertical ? target.h : target.w
+    const step = Math.min(12, (span * 0.5) / list.length)
+    list.forEach((route, k) => {
+      const offset = (k - (list.length - 1) / 2) * step
+      const n = route.points.length
+      const tip = route.points[n - 1], prev = route.points[n - 2]
+      if (onVertical) {
+        route.points[n - 1] = { x: tip.x, y: tip.y + offset }
+        route.points[n - 2] = { x: prev.x, y: tip.y + offset }
+      } else {
+        route.points[n - 1] = { x: tip.x + offset, y: tip.y }
+        route.points[n - 2] = { x: tip.x + offset, y: prev.y }
+      }
+    })
+  }
+
+  const parts = routes.map(route =>
+    `<path class="${route.cls}" d="${elbow(route.points)}"${route.both ? ' marker-start="url(#arrowBack)"' : ''} marker-end="url(#arrow)" data-i="${route.i}"/>`)
+
+  svg.innerHTML = `<defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#8b97b4" stroke="none"/></marker>
+    <marker id="arrowBack" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#8b97b4" stroke="none"/></marker>
+  </defs>${parts.join('')}`
 
   let step = 0
   for (const path of svg.querySelectorAll('path[data-i]')) {
     const len = path.getTotalLength()
     path.style.strokeDasharray = `${len}`
     path.style.strokeDashoffset = `${len}`
-    path.style.transition = `stroke-dashoffset .4s ease ${step++ * 12}ms`
+    path.style.transition = `stroke-dashoffset .4s ease ${step++ * 10}ms`
     requestAnimationFrame(() => { path.style.strokeDashoffset = '0' })
   }
 }
 
 let timer
 addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(draw, 140) })
-render((window.SUPERAGENT || {}).map || { zones: [], edges: [] })
+render((window.SUPERAGENT || {}).map || { nodes: {}, edges: [] })
 </script>
 </body>
 </html>
